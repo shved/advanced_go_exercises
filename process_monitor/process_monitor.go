@@ -32,6 +32,10 @@ func main() {
 
 	for {
 		mem, err := process.MemoryInfo()
+        if err != nil {
+            log.Fatal(err)
+        }
+
 		times, err := process.Times()
 		if err != nil {
 			log.Fatal(err)
