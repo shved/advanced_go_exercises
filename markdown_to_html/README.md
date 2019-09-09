@@ -7,14 +7,20 @@ For the first iteration it only supports bold text, italic and strikethrough tex
 # Usage
 
 ```
-./markdown_to_html \*this is bold\* \_and this is italic\_
-And this is \~striked through\~.
+make build
+```
+
+and then
+
+```
+./markdown_to_html "*bold* 
+_italic_ 
+~strikethroughed~ 
+*surprisingly*_works_ 
+* surprisingly also works* 
+*and ~also~ _works_ like that*"
 ```
 or
 ```
-./markdown_to_html < example.md
-```
-
-```
-./markdown_to_html But \* this\* and \* this \* \*and \~this\~ are\* invalid.
+./markdown_to_html < your.md
 ```

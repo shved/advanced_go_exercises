@@ -1,3 +1,4 @@
-[ ] support other tags
-[ ] support nested tags
-[ ] ignore escape sequences
+- [ ] add test
+- [ ] support other tags
+- [ ] support nested tags
+- [ ] ignore escape sequences
