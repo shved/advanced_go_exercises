@@ -6,16 +6,16 @@ import (
 	"strings"
 )
 
-// var inputExample = `
+// Example of valid input:
 // *bold*
 // _italic_
 // ~strikethroughed~
 // *surprisingly*_works_
 // * surprisingly also works*
 // *and ~also~ _works_ like that*
-// `
-
-var closingFlag bool = true
+// *and ~_also_ will~ work like* that
+//
+var closingFlags = make(map[NodeKind]bool)
 
 func main() {
 	var md string
@@ -30,11 +30,11 @@ func parse(text string, stack *nodeStack) {
 	for _, char := range text {
 		switch char {
 		case '*':
-			stack.Push(Node{kind: Bold, contents: string(char), closingFlag: toggleClosingFlag()})
+			stack.Push(Node{kind: Bold, contents: string(char), closingFlag: toggleClosingFlag(Bold)})
 		case '_':
-			stack.Push(Node{kind: Italic, contents: string(char), closingFlag: toggleClosingFlag()})
+			stack.Push(Node{kind: Italic, contents: string(char), closingFlag: toggleClosingFlag(Italic)})
 		case '~':
-			stack.Push(Node{kind: Strikethrough, contents: string(char), closingFlag: toggleClosingFlag()})
+			stack.Push(Node{kind: Strikethrough, contents: string(char), closingFlag: toggleClosingFlag(Strikethrough)})
 		default:
 			stack.Push(Node{kind: Content, contents: string(char)})
 		}
@@ -50,8 +50,11 @@ func parse(text string, stack *nodeStack) {
 	}
 }
 
-func toggleClosingFlag() bool {
-	closingFlag = !closingFlag	
-	return closingFlag
+// Toggles closinf flag value for each tag type
+func toggleClosingFlag(t NodeKind) bool {
+	if _, ok := closingFlags[t]; ok == false {
+		closingFlags[t] = true
+	}
+	closingFlags[t] = !closingFlags[t]
+	return closingFlags[t]
 }
-
