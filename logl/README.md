@@ -29,5 +29,5 @@ logger := logl.NewLogger(opts)
 
 And log messages
 ```go
-logger.Log("my super duper event fired!", logl.Info)
+logger.Log("my super duper event fired!", time.Now(), logl.Info) // time will be casted to UTC
 ```

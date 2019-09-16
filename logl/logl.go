@@ -51,27 +51,26 @@ type Logger struct {
 // Returns a pointer to new logger object.
 // If not set, dest will be set to stdout and separator will be set to \t (tab).
 func NewLogger(lo LoggerOptions) *Logger {
-	l := Logger{dest: lo.Dest, source: lo.Source, separator: lo.Separator, level: lo.Level}
-	if l.dest == nil {
-		l.dest = os.Stdout
+	if lo.Dest == nil {
+		lo.Dest = os.Stdout
 	}
-	if l.separator == "" {
-		l.separator = "\t"
+	if lo.Separator == "" {
+		lo.Separator = "\t"
 	}
-	return &l
+	return &Logger{dest: lo.Dest, source: lo.Source, separator: lo.Separator, level: lo.Level}
 }
 
-func (l Logger) Log(s string, level LogLevel) error {
+func (l *Logger) Log(s string, timestamp time.Time, level LogLevel) error {
 	if l.level < level {
 		return nil
 	}
 
-	now := time.Now().UTC()
+	timestamp = timestamp.UTC()
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	writePrefix(&l, now)
+	writePrefix(l, timestamp)
 
 	l.buffer = append(l.buffer, s...)
 	if len(s) == 0 || s[len(s)-1] != '\n' {
@@ -79,7 +78,7 @@ func (l Logger) Log(s string, level LogLevel) error {
 	}
 
 	_, err := l.dest.Write(l.buffer)
-	// l.buffer = l.buffer[:0]
+	l.buffer = l.buffer[:0]
 	return err
 }
 

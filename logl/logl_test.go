@@ -3,13 +3,19 @@ package logl
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
-	"regexp"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestLogWriting(t *testing.T) {
-	logEntryPattern, _ := regexp.Compile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\t\S+\t\S+\n`)
+	timestamp1, _ := time.Parse(time.RFC3339, "2019-01-02T15:04:05Z")
+	timestamp2, _ := time.Parse(time.RFC3339, "2019-02-02T15:04:05Z")
+
+	expectedEntry1 := "2019-01-02T15:04:05Z\ttest-app\tmessage1"
+	expectedEntry2 := "2019-02-02T15:04:05Z\ttest-app\tmessage2"
 
 	f, err := os.Create("/tmp/logl_test_log")
 	defer f.Close()
@@ -23,19 +29,24 @@ func TestLogWriting(t *testing.T) {
 		Level:  Info,
 	}
 	logger := NewLogger(opts)
-	logger.Log("message1", Error)
-	logger.Log("message2", Error)
+	logger.Log("message1", timestamp1, Error)
+	if len(logger.buffer) > 0 {
+		t.Fatal("logger buffer doesnt flush after log entry writing")
+	}
+	logger.Log("message2", timestamp2, Error)
+	if len(logger.buffer) > 0 {
+		t.Fatal("logger buffer doesnt flush after log entry writing")
+	}
 
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := fmt.Sprintln(scanner.Text())
-		if err := scanner.Err(); err != nil {
-			panic(err)
-		}
+	dat, _ := ioutil.ReadFile("/tmp/logl_test_log")
+	lines := strings.Split(string(dat), "\n")
 
-		if !logEntryPattern.MatchString(line) {
-			t.Fatalf("given %v log entry doesnt match expected pattern", line)
-		}
+	if lines[0] != expectedEntry1 {
+		t.Fatalf("expected %q entry doesnt match %q entry", expectedEntry1, lines[0])
+	}
+
+	if lines[1] != expectedEntry2 {
+		t.Fatalf("expected %q entry doesnt match %q entry", expectedEntry2, lines[1])
 	}
 }
 
@@ -52,8 +63,8 @@ func TestLogLevel(t *testing.T) {
 		Level:  Error,
 	}
 	logger := NewLogger(opts)
-	logger.Log("message1", Info)
-	logger.Log("message2", Debug)
+	logger.Log("message1", time.Now(), Info)
+	logger.Log("message2", time.Now(), Debug)
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
