@@ -84,7 +84,7 @@ func (l *Logger) Log(s string, timestamp time.Time, level LogLevel) error {
 		writeError = l.FlushBuffer()
 	}
 
-	writePrefix(l, timestamp)
+	l.writePrefix(timestamp)
 
 	l.buffer = append(l.buffer, s...)
 	if len(s) == 0 || s[len(s)-1] != '\n' {
@@ -100,7 +100,7 @@ func (l *Logger) FlushBuffer() error {
 	return err
 }
 
-func writePrefix(l *Logger, timestamp time.Time) {
+func (l *Logger) writePrefix(timestamp time.Time) {
 	parts := []string{timestamp.Format(time.RFC3339)}
 	if len(l.source) > 0 {
 		parts = append(parts, l.source)
