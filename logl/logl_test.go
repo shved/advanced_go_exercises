@@ -30,13 +30,8 @@ func TestLogWriting(t *testing.T) {
 	}
 	logger := NewLogger(opts)
 	logger.Log("message1", timestamp1, Error)
-	if len(logger.buffer) > 0 {
-		t.Fatal("logger buffer doesnt flush after log entry writing")
-	}
 	logger.Log("message2", timestamp2, Error)
-	if len(logger.buffer) > 0 {
-		t.Fatal("logger buffer doesnt flush after log entry writing")
-	}
+	_ = logger.FlushBuffer()
 
 	dat, _ := ioutil.ReadFile("/tmp/logl_test_log")
 	lines := strings.Split(string(dat), "\n")
@@ -65,6 +60,7 @@ func TestLogLevel(t *testing.T) {
 	logger := NewLogger(opts)
 	logger.Log("message1", time.Now(), Info)
 	logger.Log("message2", time.Now(), Debug)
+	logger.FlushBuffer()
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -89,5 +85,9 @@ func TestNewLoggerDefaultValues(t *testing.T) {
 
 	if l.separator != "\t" {
 		t.Fatalf("expected logger to have default separator set to \\t, but was set to %v", l.separator)
+	}
+
+	if cap(l.buffer) != 4096 {
+		t.Fatalf("expected logger to have default buffer capacity set to 4096, but was set to %v", cap(l.buffer))
 	}
 }

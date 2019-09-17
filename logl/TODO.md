@@ -1,2 +1,2 @@
-- [ ] buffer log entries by 4KB to reduce io calls
+- [√] buffer log entries by 4KB to reduce io calls
 - [ ] optionally automate file rotation by some threshold (time or file size)

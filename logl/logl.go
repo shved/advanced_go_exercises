@@ -1,22 +1,23 @@
 // Package logl is a simple logging library.
-// Every logging event is set
 //
 // Usage:
 //
 // var opts LoggerOptions = LoggerOptions{
-// 	Dest: os.Open("some/file"),
+// 	Dest: os.Open("some/file"), // any io.Writer is supported; default to stdout
 // 	Source: "my-app",
-// 	Separator: "] [",
-//	Level: logl.Info
+// 	Separator: " // ", // default to \\t
+// 	Level: logl.Info,
+// 	BufferLength: 1024 // default to 4096, min 1024
 // }
 //
 // logger := logl.NewLogger(opts)
 //
-// logger.Log("my super duper event fired!", logl.Info)
+// logger.Log("my super duper event fired!", time.Now(), logl.Info)
 //
 package logl
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"strings"
@@ -33,10 +34,11 @@ const (
 )
 
 type LoggerOptions struct {
-	Dest      io.Writer
-	Source    string
-	Separator string
-	Level     LogLevel
+	Dest         io.Writer
+	Source       string
+	Separator    string
+	Level        LogLevel
+	BufferLength uint
 }
 
 type Logger struct {
@@ -57,7 +59,13 @@ func NewLogger(lo LoggerOptions) *Logger {
 	if lo.Separator == "" {
 		lo.Separator = "\t"
 	}
-	return &Logger{dest: lo.Dest, source: lo.Source, separator: lo.Separator, level: lo.Level}
+	if lo.BufferLength == 0 {
+		lo.BufferLength = 4096
+	}
+	if lo.BufferLength < 1024 {
+		lo.BufferLength = 1024
+	}
+	return &Logger{buffer: make([]byte, lo.BufferLength), dest: lo.Dest, source: lo.Source, separator: lo.Separator, level: lo.Level}
 }
 
 func (l *Logger) Log(s string, timestamp time.Time, level LogLevel) error {
@@ -65,10 +73,16 @@ func (l *Logger) Log(s string, timestamp time.Time, level LogLevel) error {
 		return nil
 	}
 
+	var writeError error
+
 	timestamp = timestamp.UTC()
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
+
+	if len(s) > cap(l.buffer)-len(l.buffer) {
+		writeError = l.FlushBuffer()
+	}
 
 	writePrefix(l, timestamp)
 
@@ -77,7 +91,11 @@ func (l *Logger) Log(s string, timestamp time.Time, level LogLevel) error {
 		l.buffer = append(l.buffer, '\n')
 	}
 
-	_, err := l.dest.Write(l.buffer)
+	return writeError
+}
+
+func (l *Logger) FlushBuffer() error {
+	_, err := l.dest.Write(bytes.Trim(l.buffer, "\x00"))
 	l.buffer = l.buffer[:0]
 	return err
 }

@@ -1,6 +1,6 @@
 # This is
 
-A simple logging library.
+A simple logging library with simple writes buffering.
 
 # Usage
 
@@ -15,10 +15,11 @@ import (
 Provide logger options struct
 ```go
 var opts LoggerOptions = LoggerOptions{
-	Dest: os.Open("some/file"), // default to stdout
+	Dest: os.Open("some/file"), // any io.Writer is supported; default to stdout
 	Source: "my-app",
 	Separator: " // ", // default to \\t
-	Level: logl.Info
+	Level: logl.Info,
+	BufferLength: 1024 // default to 4096, min 1024
 }
 ```
 
